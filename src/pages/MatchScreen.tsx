@@ -113,10 +113,15 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
             {match.players.length >= 2 && (
               <button
                 onClick={() => setShowScoreboard(!showScoreboard)}
-                className={`p-2 rounded-lg transition-colors ${showScoreboard ? "bg-primary/20 text-primary" : "hover:bg-muted text-muted-foreground"}`}
+                className={`p-2 rounded-lg transition-colors relative ${showScoreboard ? "bg-primary/20 text-primary" : "hover:bg-muted text-muted-foreground"}`}
                 title={showScoreboard ? "Hide scoreboard" : "Show scoreboard"}
               >
-                {showScoreboard ? <Eye size={18} /> : <EyeOff size={18} />}
+                <Trophy size={18} />
+                {!showScoreboard && (
+                  <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <span className="block w-[2px] h-5 bg-current rotate-45 rounded-full" />
+                  </span>
+                )}
               </button>
             )}
             <button
