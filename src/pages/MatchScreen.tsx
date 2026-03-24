@@ -9,7 +9,7 @@ import { ActionLog } from "@/components/ActionLog";
 import { Scoreboard } from "@/components/Scoreboard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { ActionToast } from "@/components/ActionToast";
-import { Player, ScoreAction } from "@/store/gameTypes";
+import { Player, ScoreAction, PLAYER_COLORS } from "@/store/gameTypes";
 
 interface MatchScreenProps {
   onNavigate: (page: "home") => void;
@@ -27,7 +27,6 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
   const [showScoreboard, setShowScoreboard] = useState(true);
   const [lastAction, setLastAction] = useState<ScoreAction | null>(null);
 
-  // Track last action for toast
   useEffect(() => {
     if (!match || match.actions.length === 0) return;
     const latest = match.actions[match.actions.length - 1];
@@ -36,7 +35,6 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
     return () => clearTimeout(timer);
   }, [match?.actions.length]);
 
-  // Sorted players for ranked display
   const rankedPlayers = useMemo(() => {
     if (!match) return [];
     return [...match.players].sort((a, b) => b.score - a.score);
@@ -58,7 +56,7 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
   };
 
   const handleBulkSave = (names: string[]) => {
-    const usedColors = match?.players.map(p => p.color) ?? [];
+    const usedColors = match.players.map(p => p.color);
     const available = PLAYER_COLORS.filter(c => !usedColors.includes(c));
     names.forEach((n, i) => {
       const color = available[i % available.length] ?? PLAYER_COLORS[i % PLAYER_COLORS.length];
@@ -87,88 +85,82 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
 
   const canAddPlayer = match.players.length < 12;
   const canUndo = match.actions.length > 0;
-  const leaderScore = rankedPlayers.length > 0 ? rankedPlayers[0]?.score : 0;
   const leaderId = rankedPlayers.length > 1 && rankedPlayers[0]?.score > rankedPlayers[1]?.score
     ? rankedPlayers[0]?.id : null;
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      {!focusMode && (
-        <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border px-4 py-3">
-          <div className="flex items-center justify-between max-w-2xl mx-auto">
+      <div className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-border px-4 py-3">
+        <div className="flex items-center justify-between max-w-2xl mx-auto">
+          <button
+            onClick={() => onNavigate("home")}
+            className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+
+          <h2 className="font-display font-bold text-foreground text-lg">
+            {t.appName}
+          </h2>
+
+          <div className="flex items-center gap-1">
+            {match.players.length >= 2 && (
+              <button
+                onClick={() => setShowScoreboard(!showScoreboard)}
+                className={`p-2 rounded-lg transition-colors ${showScoreboard ? "bg-primary/20 text-primary" : "hover:bg-muted text-muted-foreground"}`}
+                title={showScoreboard ? "Hide scoreboard" : "Show scoreboard"}
+              >
+                {showScoreboard ? <Eye size={18} /> : <EyeOff size={18} />}
+              </button>
+            )}
             <button
-              onClick={() => onNavigate("home")}
-              className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
+              onClick={() => setShowLog(!showLog)}
+              className={`p-2 rounded-lg transition-colors ${showLog ? "bg-primary/20 text-primary" : "hover:bg-muted text-muted-foreground"}`}
             >
-              <ArrowLeft size={20} />
+              <History size={18} />
             </button>
-
-            <h2 className="font-display font-bold text-foreground text-lg">
-              {t.appName}
-            </h2>
-
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setFocusMode(true)}
-                className="p-2 rounded-lg hover:bg-muted text-muted-foreground transition-colors"
-                title="Focus mode"
-              >
-                <Eye size={18} />
-              </button>
-              <button
-                onClick={() => setShowLog(!showLog)}
-                className={`p-2 rounded-lg transition-colors ${showLog ? "bg-primary/20 text-primary" : "hover:bg-muted text-muted-foreground"}`}
-              >
-                <History size={18} />
-              </button>
-            </div>
           </div>
         </div>
-      )}
-
-      {/* Focus mode exit */}
-      {focusMode && (
-        <div className="sticky top-0 z-20 px-4 py-2 flex justify-end max-w-2xl mx-auto w-full">
-          <button
-            onClick={() => setFocusMode(false)}
-            className="p-2 rounded-lg bg-card/80 backdrop-blur-sm border border-border text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <EyeOff size={18} />
-          </button>
-        </div>
-      )}
+      </div>
 
       {/* Content */}
       <div className="flex-1 px-4 py-4 max-w-2xl mx-auto w-full">
         {/* Action Log Panel */}
-        {!focusMode && (
-          <AnimatePresence>
-            {showLog && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden mb-4"
-              >
-                <div className="bg-card rounded-2xl p-4 border border-border">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-display font-semibold text-foreground">{t.match.actionLog}</h3>
-                    <button onClick={() => setShowLog(false)} className="text-muted-foreground hover:text-foreground">
-                      <X size={16} />
-                    </button>
-                  </div>
-                  <ActionLog actions={match.actions} />
+        <AnimatePresence>
+          {showLog && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden mb-4"
+            >
+              <div className="bg-card rounded-2xl p-4 border border-border">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-display font-semibold text-foreground">{t.match.actionLog}</h3>
+                  <button onClick={() => setShowLog(false)} className="text-muted-foreground hover:text-foreground">
+                    <X size={16} />
+                  </button>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        )}
+                <ActionLog actions={match.actions} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Scoreboard */}
-        {!focusMode && match.players.length >= 2 && (
-          <Scoreboard players={match.players} />
-        )}
+        <AnimatePresence>
+          {showScoreboard && match.players.length >= 2 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden"
+            >
+              <Scoreboard players={match.players} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Players */}
         {match.players.length === 0 ? (
@@ -190,7 +182,7 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
                   onEdit={handleEditPlayer}
                   rank={match.players.length >= 2 ? index + 1 : undefined}
                   isLeader={player.id === leaderId}
-                  focusMode={focusMode}
+                  focusMode={false}
                 />
               ))}
             </AnimatePresence>
@@ -204,25 +196,21 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
       {/* Bottom bar */}
       <div className="sticky bottom-0 z-20 bg-background/90 backdrop-blur-md border-t border-border px-4 py-3">
         <div className="flex items-center justify-between max-w-2xl mx-auto gap-2">
-          {!focusMode && (
-            <>
-              <button
-                onClick={() => setShowEndConfirm(true)}
-                className="p-3 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                title={t.match.endGame}
-              >
-                <LogOut size={18} />
-              </button>
+          <button
+            onClick={() => setShowEndConfirm(true)}
+            className="p-3 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+            title={t.match.endGame}
+          >
+            <LogOut size={18} />
+          </button>
 
-              <button
-                onClick={() => setShowResetConfirm(true)}
-                className="p-3 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-                title={t.match.resetScores}
-              >
-                <RotateCcw size={18} />
-              </button>
-            </>
-          )}
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="p-3 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+            title={t.match.resetScores}
+          >
+            <RotateCcw size={18} />
+          </button>
 
           <button
             onClick={() => canUndo && undo()}
@@ -233,22 +221,20 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
             <Undo2 size={18} />
           </button>
 
-          {!focusMode && (
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                if (canAddPlayer) {
-                  setEditingPlayer(null);
-                  setShowPlayerModal(true);
-                }
-              }}
-              disabled={!canAddPlayer}
-              className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-primary/90 disabled:opacity-50 text-base"
-            >
-              <Plus size={18} />
-              {t.match.addPlayer}
-            </motion.button>
-          )}
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            onClick={() => {
+              if (canAddPlayer) {
+                setEditingPlayer(null);
+                setShowPlayerModal(true);
+              }
+            }}
+            disabled={!canAddPlayer}
+            className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold flex items-center justify-center gap-2 transition-colors hover:bg-primary/90 disabled:opacity-50 text-base"
+          >
+            <Plus size={18} />
+            {t.match.addPlayer}
+          </motion.button>
         </div>
       </div>
 
@@ -257,9 +243,11 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
         open={showPlayerModal}
         onClose={() => { setShowPlayerModal(false); setEditingPlayer(null); }}
         onSave={handleSavePlayer}
+        onBulkSave={handleBulkSave}
         onDelete={editingPlayer ? handleDeletePlayer : undefined}
         player={editingPlayer}
         defaultColor={getNextColor()}
+        usedColors={match.players.map(p => p.color)}
       />
 
       <ConfirmDialog
