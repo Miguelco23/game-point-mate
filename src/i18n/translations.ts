@@ -108,6 +108,11 @@ export const translations = {
       delete: "Eliminar",
       edit: "Editar",
       add: "Agregar Jugador",
+      bulkAdd: "Agregar Varios",
+      bulkHint: "Escribe los nombres — los colores se asignan automáticamente",
+      playerLabel: "Jugador",
+      addAnother: "Agregar otro",
+      addCount: "Agregar {count}",
       maxPlayers: "Máximo de 12 jugadores alcanzado",
     },
     settings: {
