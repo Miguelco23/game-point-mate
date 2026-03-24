@@ -121,7 +121,7 @@ export const translations = {
       done: "Listo",
     },
   },
-} as const;
+};
 
 export type Language = keyof typeof translations;
-export type TranslationKeys = (typeof translations)[Language];
+export type TranslationKeys = typeof translations.en;
