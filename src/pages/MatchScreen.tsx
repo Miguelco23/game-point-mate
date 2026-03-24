@@ -57,6 +57,16 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
     setEditingPlayer(null);
   };
 
+  const handleBulkSave = (names: string[]) => {
+    const usedColors = match?.players.map(p => p.color) ?? [];
+    const available = PLAYER_COLORS.filter(c => !usedColors.includes(c));
+    names.forEach((n, i) => {
+      const color = available[i % available.length] ?? PLAYER_COLORS[i % PLAYER_COLORS.length];
+      addPlayer(n, color);
+    });
+    setShowPlayerModal(false);
+  };
+
   const handleEditPlayer = (player: Player) => {
     setEditingPlayer(player);
     setShowPlayerModal(true);
