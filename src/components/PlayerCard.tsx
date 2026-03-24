@@ -136,16 +136,43 @@ export function PlayerCard({ player, onEdit, rank, isLeader, focusMode }: Player
             <span className="text-xs text-muted-foreground ml-1.5">{t.match.points}</span>
           </motion.div>
 
-          {/* Score buttons - thumb-friendly */}
+          {/* Add / Subtract toggle */}
+          <div className="flex gap-1.5 mb-2">
+            <button
+              onClick={() => setIsSubtract(false)}
+              className={`flex-1 py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-1 transition-all ${
+                !isSubtract
+                  ? "bg-success/20 text-success ring-2 ring-success/40"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              <Plus size={14} strokeWidth={3} /> {t.match.add || "Add"}
+            </button>
+            <button
+              onClick={() => setIsSubtract(true)}
+              className={`flex-1 py-2 rounded-xl font-bold text-sm flex items-center justify-center gap-1 transition-all ${
+                isSubtract
+                  ? "bg-destructive/20 text-destructive ring-2 ring-destructive/40"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              <Minus size={14} strokeWidth={3} /> {t.match.subtract || "Subtract"}
+            </button>
+          </div>
+
+          {/* Score buttons */}
           <div className="flex gap-1.5">
-            {/* Minus buttons */}
             {QUICK_VALUES.map((v) => (
               <button
-                key={`minus-${v}`}
-                onClick={() => handleScore(-v)}
-                className="flex-1 flex items-center justify-center gap-0.5 py-3 rounded-xl bg-destructive/10 hover:bg-destructive/20 text-destructive font-bold text-sm transition-all active:scale-90 active:bg-destructive/30"
+                key={v}
+                onClick={() => handleScore(isSubtract ? -v : v)}
+                className={`flex-1 flex items-center justify-center gap-0.5 py-3 rounded-xl font-bold text-sm transition-all active:scale-90 ${
+                  isSubtract
+                    ? "bg-destructive/10 hover:bg-destructive/20 text-destructive active:bg-destructive/30"
+                    : "bg-success/10 hover:bg-success/20 text-success active:bg-success/30"
+                }`}
               >
-                <Minus size={12} strokeWidth={3} />{v}
+                {isSubtract ? <Minus size={12} strokeWidth={3} /> : <Plus size={12} strokeWidth={3} />}{v}
               </button>
             ))}
 
@@ -156,17 +183,6 @@ export function PlayerCard({ player, onEdit, rank, isLeader, focusMode }: Player
             >
               <Hash size={14} />
             </button>
-
-            {/* Plus buttons */}
-            {QUICK_VALUES.map((v) => (
-              <button
-                key={`plus-${v}`}
-                onClick={() => handleScore(v)}
-                className="flex-1 flex items-center justify-center gap-0.5 py-3 rounded-xl bg-success/10 hover:bg-success/20 text-success font-bold text-sm transition-all active:scale-90 active:bg-success/30"
-              >
-                <Plus size={12} strokeWidth={3} />{v}
-              </button>
-            ))}
           </div>
         </div>
       </motion.div>
