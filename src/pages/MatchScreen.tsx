@@ -180,12 +180,11 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <AnimatePresence>
-              {rankedPlayers.map((player, index) => (
+              {match.players.map((player) => (
                 <PlayerCard
                   key={player.id}
                   player={player}
                   onEdit={handleEditPlayer}
-                  rank={match.players.length >= 2 ? index + 1 : undefined}
                   isLeader={player.id === leaderId}
                   focusMode={false}
                 />
