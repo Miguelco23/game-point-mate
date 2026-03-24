@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, Undo2, RotateCcw, History, X, LogOut, Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Plus, Undo2, RotateCcw, History, X, LogOut, Trophy } from "lucide-react";
 import { useGame } from "@/store/GameContext";
 import { useI18n } from "@/i18n/I18nContext";
 import { PlayerCard } from "@/components/PlayerCard";
