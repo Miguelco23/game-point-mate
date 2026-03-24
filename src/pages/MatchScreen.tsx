@@ -111,6 +111,11 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
           )}
         </AnimatePresence>
 
+        {/* Scoreboard */}
+        {match.players.length >= 2 && (
+          <Scoreboard players={match.players} />
+        )}
+
         {/* Players */}
         {match.players.length === 0 ? (
           <motion.div
