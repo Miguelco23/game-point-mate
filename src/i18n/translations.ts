@@ -100,6 +100,8 @@ export const translations = {
       winner: "Ganador",
       tie: "¡Empate!",
       points: "pts",
+      add: "Sumar",
+      subtract: "Restar",
       scoreboard: "Tabla de Posiciones",
     },
     player: {
