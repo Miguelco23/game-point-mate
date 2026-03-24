@@ -40,6 +40,13 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
     return [...match.players].sort((a, b) => b.score - a.score);
   }, [match?.players]);
 
+  const leaderId = useMemo(() => {
+    if (rankedPlayers.length > 1 && rankedPlayers[0]?.score > rankedPlayers[1]?.score) {
+      return rankedPlayers[0]?.id;
+    }
+    return null;
+  }, [rankedPlayers]);
+
   if (!match) {
     onNavigate("home");
     return null;
