@@ -24,7 +24,7 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
   const [showLog, setShowLog] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
-  const [focusMode, setFocusMode] = useState(false);
+  const [showScoreboard, setShowScoreboard] = useState(true);
   const [lastAction, setLastAction] = useState<ScoreAction | null>(null);
 
   // Track last action for toast
