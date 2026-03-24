@@ -31,6 +31,7 @@ export const translations = {
       winner: "Winner",
       tie: "Tie!",
       points: "pts",
+      scoreboard: "Scoreboard",
     },
     player: {
       name: "Player Name",
@@ -92,6 +93,7 @@ export const translations = {
       winner: "Ganador",
       tie: "¡Empate!",
       points: "pts",
+      scoreboard: "Tabla de Posiciones",
     },
     player: {
       name: "Nombre del Jugador",

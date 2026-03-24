@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n/I18nContext";
 import { PlayerCard } from "@/components/PlayerCard";
 import { PlayerModal } from "@/components/PlayerModal";
 import { ActionLog } from "@/components/ActionLog";
+import { Scoreboard } from "@/components/Scoreboard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Player } from "@/store/gameTypes";
 
@@ -109,6 +110,11 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Scoreboard */}
+        {match.players.length >= 2 && (
+          <Scoreboard players={match.players} />
+        )}
 
         {/* Players */}
         {match.players.length === 0 ? (
