@@ -14,7 +14,7 @@ interface PlayerCardProps {
   focusMode?: boolean;
 }
 
-const QUICK_VALUES = [1, 5, 10];
+const QUICK_VALUES = [1, 3, 5, 10];
 
 export function PlayerCard({ player, onEdit, rank, isLeader, focusMode }: PlayerCardProps) {
   const { updateScore, removePlayer } = useGame();
@@ -23,6 +23,7 @@ export function PlayerCard({ player, onEdit, rank, isLeader, focusMode }: Player
   const [showCustom, setShowCustom] = useState(false);
   const [scoreKey, setScoreKey] = useState(0);
   const [flashColor, setFlashColor] = useState<"positive" | "negative" | null>(null);
+  const [isSubtract, setIsSubtract] = useState(false);
 
   const handleScore = (delta: number) => {
     updateScore(player.id, delta);
