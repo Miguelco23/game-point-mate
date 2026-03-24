@@ -40,6 +40,13 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
     return [...match.players].sort((a, b) => b.score - a.score);
   }, [match?.players]);
 
+  const leaderId = useMemo(() => {
+    if (rankedPlayers.length > 1 && rankedPlayers[0]?.score > rankedPlayers[1]?.score) {
+      return rankedPlayers[0]?.id;
+    }
+    return null;
+  }, [rankedPlayers]);
+
   if (!match) {
     onNavigate("home");
     return null;
@@ -85,8 +92,6 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
 
   const canAddPlayer = match.players.length < 12;
   const canUndo = match.actions.length > 0;
-  const leaderId = rankedPlayers.length > 1 && rankedPlayers[0]?.score > rankedPlayers[1]?.score
-    ? rankedPlayers[0]?.id : null;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -175,12 +180,11 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <AnimatePresence>
-              {rankedPlayers.map((player, index) => (
+              {match.players.map((player) => (
                 <PlayerCard
                   key={player.id}
                   player={player}
                   onEdit={handleEditPlayer}
-                  rank={match.players.length >= 2 ? index + 1 : undefined}
                   isLeader={player.id === leaderId}
                   focusMode={false}
                 />
