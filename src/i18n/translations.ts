@@ -31,6 +31,8 @@ export const translations = {
       winner: "Winner",
       tie: "Tie!",
       points: "pts",
+      add: "Add",
+      subtract: "Subtract",
       scoreboard: "Scoreboard",
     },
     player: {
