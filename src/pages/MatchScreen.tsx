@@ -92,8 +92,6 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
 
   const canAddPlayer = match.players.length < 12;
   const canUndo = match.actions.length > 0;
-  const leaderId = rankedPlayers.length > 1 && rankedPlayers[0]?.score > rankedPlayers[1]?.score
-    ? rankedPlayers[0]?.id : null;
 
   return (
     <div className="min-h-screen flex flex-col">
