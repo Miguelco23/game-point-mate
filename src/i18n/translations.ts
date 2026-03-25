@@ -1,8 +1,8 @@
 export const translations = {
   en: {
-    appName: "Game Point",
+    appName: "Game Points",
     home: {
-      title: "Game Point",
+      title: "Game Points",
       subtitle: "Track scores for any game",
       createGame: "Create Game",
       noGames: "No active game yet",
