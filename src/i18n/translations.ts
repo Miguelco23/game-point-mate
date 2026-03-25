@@ -69,9 +69,9 @@ export const translations = {
     },
   },
   es: {
-    appName: "Game Point",
+    appName: "Game Points",
     home: {
-      title: "Game Point",
+      title: "Game Points",
       subtitle: "Lleva el puntaje de cualquier juego",
       createGame: "Crear Juego",
       noGames: "Aún no hay juego activo",
