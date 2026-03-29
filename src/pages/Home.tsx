@@ -44,7 +44,7 @@ export function Home({ onNavigate }: HomeProps) {
         </p>
 
         <div className="space-y-3">
-          {match && match.isActive && (
+          {match && match.isActive && match.players.length > 0 && (
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={() => onNavigate("match")}

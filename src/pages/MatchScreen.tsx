@@ -13,6 +13,7 @@ import { SaveMatchModal } from "@/components/SaveMatchModal";
 import { ActionToast } from "@/components/ActionToast";
 import { useSavedMatches } from "@/hooks/useSavedMatches";
 import { useAutoSaveMatch } from "@/hooks/useAutoSaveMatch";
+import { useValidateSavedMatch } from "@/hooks/useValidateSavedMatch";
 import { Player, ScoreAction, PLAYER_COLORS } from "@/store/gameTypes";
 
 interface MatchScreenProps {
@@ -20,12 +21,15 @@ interface MatchScreenProps {
 }
 
 export function MatchScreen({ onNavigate }: MatchScreenProps) {
-  const { match, addPlayer, editPlayer, removePlayer, undo, resetScores, endMatch, getNextColor } = useGame();
+  const { match, addPlayer, editPlayer, removePlayer, undo, resetScores, endMatch, getNextColor, loadMatch } = useGame();
   const { t } = useI18n();
-  const { saveMatch } = useSavedMatches();
+  const { saveMatch, deleteMatch } = useSavedMatches();
 
   // Auto-save changes to saved matches
   useAutoSaveMatch();
+
+  // Validate that saved match still exists
+  useValidateSavedMatch();
 
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
@@ -97,6 +101,12 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
 
   const handleEndGame = () => {
     endMatch();
+
+    // If this was a saved match, delete it from saved matches
+    if (match?.sourceMatchId) {
+      deleteMatch(match.sourceMatchId);
+    }
+
     onNavigate("home");
   };
 
@@ -105,6 +115,15 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
     setIsSavingMatch(true);
     try {
       const success = await saveMatch(match, name);
+      if (success) {
+        // Update match in context with sourceMatchId and name so auto-save activates
+        loadMatch({
+          ...match,
+          sourceMatchId: match.id,
+          name,
+          status: "active",
+        });
+      }
       return success;
     } finally {
       setIsSavingMatch(false);
