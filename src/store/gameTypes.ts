@@ -14,12 +14,18 @@ export interface ScoreAction {
   timestamp: number;
 }
 
+export type MatchStatus = "active" | "paused" | "finished";
+
 export interface GameMatch {
   id: string;
+  name?: string;
   players: Player[];
   actions: ScoreAction[];
   createdAt: number;
+  updatedAt: number;
+  status: MatchStatus;
   isActive: boolean;
+  sourceMatchId?: string;
 }
 
 export interface GameSettings {

@@ -1,15 +1,17 @@
 import { motion } from "framer-motion";
-import { Zap, Plus, ArrowRight, Settings } from "lucide-react";
+import { Zap, Plus, ArrowRight, Settings, History } from "lucide-react";
 import { useI18n } from "@/i18n/I18nContext";
 import { useGame } from "@/store/GameContext";
+import { useSavedMatches } from "@/hooks/useSavedMatches";
 
 interface HomeProps {
-  onNavigate: (page: "match" | "settings") => void;
+  onNavigate: (page: "match" | "settings" | "saved-matches") => void;
 }
 
 export function Home({ onNavigate }: HomeProps) {
   const { t } = useI18n();
   const { match, createMatch } = useGame();
+  const { savedMatches } = useSavedMatches();
 
   const handleCreate = () => {
     createMatch();
@@ -42,13 +44,13 @@ export function Home({ onNavigate }: HomeProps) {
         </p>
 
         <div className="space-y-3">
-          {match && match.isActive && (
+          {match && match.isActive && match.players.length > 0 && (
             <motion.button
               whileTap={{ scale: 0.97 }}
               onClick={() => onNavigate("match")}
               className="w-full py-4 px-6 rounded-2xl bg-primary text-primary-foreground font-display font-semibold text-lg flex items-center justify-center gap-2 transition-colors hover:bg-primary/90"
             >
-              {t.home.continueGame}
+              {match.name ? `${t.home.continueGame} en ${match.name}` : t.home.continueGame}
               <ArrowRight size={20} />
             </motion.button>
           )}
@@ -65,6 +67,22 @@ export function Home({ onNavigate }: HomeProps) {
             <Plus size={20} />
             {t.home.createGame}
           </motion.button>
+
+          {savedMatches.length > 0 && (
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => onNavigate("saved-matches")}
+              className="w-full py-4 px-6 rounded-2xl bg-secondary/50 text-secondary-foreground hover:bg-secondary/80 font-display font-semibold text-lg flex items-center justify-center gap-2 transition-colors"
+            >
+              <History size={20} />
+              {t.saved?.viewMatches || "Saved Matches"}
+              {savedMatches.length > 0 && (
+                <span className="ml-auto inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                  {savedMatches.length}
+                </span>
+              )}
+            </motion.button>
+          )}
         </div>
 
         {!match && (
