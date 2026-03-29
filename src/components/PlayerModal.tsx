@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Users, X } from "lucide-react";
 import { Player, PLAYER_COLORS } from "@/store/gameTypes";
@@ -21,6 +21,8 @@ export function PlayerModal({ open, onClose, onSave, onBulkSave, onDelete, playe
   const [color, setColor] = useState(defaultColor);
   const [bulkMode, setBulkMode] = useState(false);
   const [bulkNames, setBulkNames] = useState<string[]>([""]);
+  const bulkInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [focusNextIndex, setFocusNextIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -30,6 +32,13 @@ export function PlayerModal({ open, onClose, onSave, onBulkSave, onDelete, playe
       setBulkNames([""]);
     }
   }, [open, player, defaultColor]);
+
+  useEffect(() => {
+    if (focusNextIndex !== null && bulkInputRefs.current[focusNextIndex]) {
+      bulkInputRefs.current[focusNextIndex]?.focus();
+      setFocusNextIndex(null);
+    }
+  }, [focusNextIndex]);
 
   const handleSave = () => {
     const trimmed = name.trim();
@@ -46,7 +55,9 @@ export function PlayerModal({ open, onClose, onSave, onBulkSave, onDelete, playe
 
   const addBulkField = () => {
     if (bulkNames.length < 12) {
+      const newLength = bulkNames.length + 1;
       setBulkNames([...bulkNames, ""]);
+      setFocusNextIndex(newLength - 1);
     }
   };
 
@@ -158,6 +169,7 @@ export function PlayerModal({ open, onClose, onSave, onBulkSave, onDelete, playe
                         style={{ backgroundColor: `hsl(${getPreviewColor(index)})` }}
                       />
                       <input
+                        ref={(el) => { bulkInputRefs.current[index] = el; }}
                         type="text"
                         value={bName}
                         onChange={(e) => updateBulkName(index, e.target.value)}
