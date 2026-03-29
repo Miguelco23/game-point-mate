@@ -56,17 +56,31 @@ export function ActionLog({ actions }: ActionLogProps) {
             <span className="font-medium text-foreground truncate">
               {action.playerName}
             </span>
-            <span
-              className={`font-display font-bold ml-auto shrink-0 ${
-                action.delta > 0 ? "text-success" : "text-destructive"
-              }`}
-            >
-              {action.delta > 0 ? "+" : ""}
-              {action.delta}
-            </span>
-            <span className="text-xs text-muted-foreground shrink-0">
-              → {action.resultingScore}
-            </span>
+            <div className="flex items-center gap-1.5 ml-auto shrink-0">
+              {/* Base and multiplier info */}
+              <span
+                className={`font-display font-bold ${
+                  action.delta > 0 ? "text-success" : "text-destructive"
+                }`}
+              >
+                {action.basePoints !== undefined 
+                  ? `${action.basePoints > 0 ? "+" : ""}${action.basePoints}`
+                  : `${action.delta > 0 ? "+" : ""}${action.delta}`
+                }
+              </span>
+              
+              {/* Multiplier badge */}
+              {action.multiplier && action.multiplier > 1 && (
+                <span className="px-1.5 py-0.5 rounded text-xs font-bold bg-primary/20 text-primary">
+                  ×{action.multiplier}
+                </span>
+              )}
+
+              {/* Final points */}
+              <span className="text-xs text-muted-foreground">
+                → {action.resultingScore}
+              </span>
+            </div>
           </motion.div>
         ))}
       </AnimatePresence>

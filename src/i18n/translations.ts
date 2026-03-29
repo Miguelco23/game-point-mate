@@ -34,6 +34,8 @@ export const translations = {
       add: "Add",
       subtract: "Subtract",
       scoreboard: "Scoreboard",
+      multiplier: "Multiplier",
+      enterMultiplier: "×value",
     },
     saved: {
       title: "Saved Matches",
@@ -129,6 +131,8 @@ export const translations = {
       add: "Sumar",
       subtract: "Restar",
       scoreboard: "Tabla de Posiciones",
+      multiplier: "Multiplicador",
+      enterMultiplier: "×valor",
     },
     saved: {
       title: "Partidas Guardadas",

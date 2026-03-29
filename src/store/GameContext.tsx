@@ -15,7 +15,8 @@ type GameAction =
   | { type: "UNDO" }
   | { type: "RESET_SCORES" }
   | { type: "END_MATCH" }
-  | { type: "LOAD"; match: GameMatch };
+  | { type: "LOAD"; match: GameMatch }
+  | { type: "SET_MULTIPLIER"; playerId: string; multiplier: number };
 
 function generateId() {
   return Math.random().toString(36).slice(2, 10);
@@ -33,6 +34,7 @@ interface GameContextType {
   endMatch: () => void;
   loadMatch: (match: GameMatch) => void;
   getNextColor: () => string;
+  setMultiplier: (playerId: string, multiplier: number) => void;
 }
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -58,6 +60,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         name: action.name,
         color: action.color,
         score: 0,
+        currentMultiplier: 1,
       };
       return {
         match: { ...state.match, players: [...state.match.players, newPlayer] },
@@ -94,21 +97,30 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (!state.match) return state;
       const player = state.match.players.find((p) => p.id === action.playerId);
       if (!player) return state;
-      const newScore = player.score + action.delta;
+      
+      // Calculate multiplied score
+      const basePoints = action.delta;
+      const multiplier = player.currentMultiplier || 1;
+      const finalPoints = basePoints * multiplier;
+      const newScore = player.score + finalPoints;
+      
       const scoreAction: ScoreAction = {
         id: generateId(),
         playerId: action.playerId,
         playerName: player.name,
-        delta: action.delta,
+        delta: finalPoints, // Store actual delta used
         resultingScore: newScore,
         timestamp: Date.now(),
+        basePoints, // Store base (before multiplier) for reference
+        multiplier, // Store multiplier used
+        finalPoints, // Store final calculated points
       };
       return {
         match: {
           ...state.match,
           updatedAt: Date.now(),
           players: state.match.players.map((p) =>
-            p.id === action.playerId ? { ...p, score: newScore } : p
+            p.id === action.playerId ? { ...p, score: newScore, currentMultiplier: 1 } : p
           ),
           actions: [...state.match.actions, scoreAction],
         },
@@ -148,6 +160,20 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "LOAD":
       return { match: action.match };
+
+    case "SET_MULTIPLIER": {
+      if (!state.match) return state;
+      return {
+        match: {
+          ...state.match,
+          players: state.match.players.map((p) =>
+            p.id === action.playerId
+              ? { ...p, currentMultiplier: action.multiplier }
+              : p
+          ),
+        },
+      };
+    }
 
     default:
       return state;
@@ -191,6 +217,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     endMatch: () => dispatch({ type: "END_MATCH" }),
     loadMatch: (match) => dispatch({ type: "LOAD", match }),
     getNextColor,
+    setMultiplier: (playerId, multiplier) => dispatch({ type: "SET_MULTIPLIER", playerId, multiplier }),
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
