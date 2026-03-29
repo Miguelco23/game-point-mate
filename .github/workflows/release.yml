@@ -1,0 +1,85 @@
+name: Release - Create Tags & Releases
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'version.json'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read current version
+        id: current_version
+        run: |
+          VERSION=$(jq -r '.version' version.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Current version: $VERSION"
+
+      - name: Get latest tag
+        id: latest_tag
+        run: |
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+          echo "Latest tag: $LATEST_TAG"
+
+      - name: Check if version was bumped
+        id: check_bump
+        run: |
+          CURRENT=$(cat version.json | jq -r '.version')
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          LATEST_VERSION=${LATEST_TAG#v}
+
+          if [ "$CURRENT" = "$LATEST_VERSION" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Version not changed ($CURRENT), skipping release"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "Version changed: $LATEST_VERSION → $CURRENT"
+          fi
+
+      - name: Create git tag
+        if: steps.check_bump.outputs.skip == 'false'
+        run: |
+          VERSION=$(jq -r '.version' version.json)
+          TAG="v$VERSION"
+          RELEASE_NOTES="Release $TAG"
+
+          # Configure git
+          git config user.name "🤖 GitHub Actions"
+          git config user.email "actions@github.com"
+
+          # Create annotated tag
+          git tag -a "$TAG" -m "$RELEASE_NOTES" || {
+            echo "Tag $TAG already exists, skipping tag creation"
+            exit 0
+          }
+
+          # Push tag
+          git push origin "$TAG" || echo "Tag already exists on remote"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: steps.check_bump.outputs.skip == 'false'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.current_version.outputs.version }}
+          release_name: Release v${{ steps.current_version.outputs.version }}
+          body: Release of Game Points v${{ steps.current_version.outputs.version }}
+          draft: false
+          prerelease: false
+
