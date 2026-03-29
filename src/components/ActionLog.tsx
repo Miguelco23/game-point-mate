@@ -7,7 +7,24 @@ interface ActionLogProps {
 }
 
 function formatTime(ts: number) {
-  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const date = new Date(ts);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const isToday = date.toDateString() === today.toDateString();
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  if (isToday) {
+    return time;
+  } else if (isYesterday) {
+    return `Yesterday ${time}`;
+  } else {
+    const dateStr = date.toLocaleDateString([], { month: "short", day: "numeric" });
+    return `${dateStr} ${time}`;
+  }
 }
 
 export function ActionLog({ actions }: ActionLogProps) {
