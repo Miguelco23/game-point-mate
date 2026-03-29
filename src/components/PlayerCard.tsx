@@ -5,6 +5,7 @@ import { Player } from "@/store/gameTypes";
 import { useGame } from "@/store/GameContext";
 import { useI18n } from "@/i18n/I18nContext";
 import { CustomScoreModal } from "./CustomScoreModal";
+import { MultiplierControl } from "./MultiplierControl";
 
 interface PlayerCardProps {
   player: Player;
@@ -17,7 +18,7 @@ interface PlayerCardProps {
 const QUICK_VALUES = [1, 3, 5, 10];
 
 export function PlayerCard({ player, onEdit, rank, isLeader, focusMode }: PlayerCardProps) {
-  const { updateScore, removePlayer } = useGame();
+  const { updateScore, removePlayer, setMultiplier, match } = useGame();
   const { t } = useI18n();
   const [showMenu, setShowMenu] = useState(false);
   const [showCustom, setShowCustom] = useState(false);
@@ -135,6 +136,16 @@ export function PlayerCard({ player, onEdit, rank, isLeader, focusMode }: Player
             </span>
             <span className="text-xs text-muted-foreground ml-1.5">{t.match.points}</span>
           </motion.div>
+
+          {/* Multiplier Control */}
+          {!focusMode && match && (
+            <div className="mb-3 pb-3 border-b border-border/50">
+              <MultiplierControl
+                currentMultiplier={player.currentMultiplier || 1}
+                onChange={(multiplier) => setMultiplier(player.id, multiplier)}
+              />
+            </div>
+          )}
 
           {/* Add / Subtract toggle */}
           <div className="flex gap-1.5 mb-2">
