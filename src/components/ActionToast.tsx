@@ -17,12 +17,20 @@ export function ActionToast({ action }: ActionToastProps) {
           transition={{ duration: 0.2 }}
           className="fixed bottom-24 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
         >
-          <div className={`px-4 py-2 rounded-full font-display font-bold text-sm shadow-xl backdrop-blur-md ${
+          <div className={`px-4 py-2 rounded-full font-display font-bold text-sm shadow-xl backdrop-blur-md flex items-center gap-2 ${
             action.delta > 0
               ? "bg-success/90 text-success-foreground"
               : "bg-destructive/90 text-destructive-foreground"
           }`}>
-            {action.delta > 0 ? "+" : ""}{action.delta} → {action.playerName}
+            <span>
+              {action.delta > 0 ? "+" : ""}{action.delta}
+            </span>
+            {action.multiplier && action.multiplier > 1 && (
+              <span className="px-1.5 py-0.5 rounded text-xs bg-black/20">
+                ×{action.multiplier}
+              </span>
+            )}
+            <span>→ {action.playerName}</span>
           </div>
         </motion.div>
       )}

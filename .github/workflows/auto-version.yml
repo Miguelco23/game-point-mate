@@ -1,0 +1,133 @@
+name: Auto Version Bump (Branch-based)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - develop
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.head_ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Determine version bump
+        id: version_info
+        run: |
+          HEAD_BRANCH="${{ github.head_ref }}"
+          BASE_BRANCH="${{ github.base_ref }}"
+
+          echo "head_branch=$HEAD_BRANCH" >> $GITHUB_OUTPUT
+          echo "base_branch=$BASE_BRANCH" >> $GITHUB_OUTPUT
+
+          # Check if it's a feature/ branch merging to develop
+          if [[ "$BASE_BRANCH" == "develop" && "$HEAD_BRANCH" =~ ^feature/ ]]; then
+            echo "bump_type=feature-to-develop" >> $GITHUB_OUTPUT
+          # Check if it's a release/ branch merging to main
+          elif [[ "$BASE_BRANCH" == "main" && "$HEAD_BRANCH" =~ ^release/ ]]; then
+            echo "bump_type=release-to-main" >> $GITHUB_OUTPUT
+          else
+            echo "bump_type=none" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Auto bump version (feature to develop) - Increment PATCH
+        if: steps.version_info.outputs.bump_type == 'feature-to-develop'
+        run: |
+          CURRENT_VERSION=$(jq -r '.version' version.json)
+          echo "Current version: $CURRENT_VERSION"
+
+          # Parse version: X.Y.Z or X.Y.Z-dev.N
+          VERSION_PART=$(echo $CURRENT_VERSION | sed 's/-dev.*//')
+          MAJOR=$(echo $VERSION_PART | cut -d. -f1)
+          MINOR=$(echo $VERSION_PART | cut -d. -f2)
+          PATCH=$(echo $VERSION_PART | cut -d. -f3)
+
+          # Increment PATCH (third number)
+          PATCH=$((PATCH + 1))
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_ENV
+
+          # Update version.json
+          jq --arg version "$NEW_VERSION" '.version = $version | .releaseType = "dev"' version.json > version.json.tmp
+          mv version.json.tmp version.json
+
+          # Configure git and commit
+          git config user.name "🤖 GitHub Actions"
+          git config user.email "actions@github.com"
+          git add version.json
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git push origin HEAD
+
+      - name: Auto bump version (release to main) - Increment MINOR
+        if: steps.version_info.outputs.bump_type == 'release-to-main'
+        run: |
+          CURRENT_VERSION=$(jq -r '.version' version.json)
+          echo "Current version: $CURRENT_VERSION"
+
+          # Parse version: X.Y.Z-dev.N
+          VERSION_PART=$(echo $CURRENT_VERSION | sed 's/-dev.*//')
+          MAJOR=$(echo $VERSION_PART | cut -d. -f1)
+          MINOR=$(echo $VERSION_PART | cut -d. -f2)
+          PATCH=$(echo $VERSION_PART | cut -d. -f3)
+
+          # Increment MINOR (second number), reset PATCH to 0
+          MINOR=$((MINOR + 1))
+          PATCH=0
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_ENV
+
+          # Update version.json
+          jq --arg version "$NEW_VERSION" '.version = $version | .releaseType = "stable"' version.json > version.json.tmp
+          mv version.json.tmp version.json
+
+          # Configure git and commit
+          git config user.name "🤖 GitHub Actions"
+          git config user.email "actions@github.com"
+          git add version.json
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git push origin HEAD
+
+      - name: Comment on PR
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const version = process.env.version || 'not updated';
+            const bumpType = '${{ steps.version_info.outputs.bump_type }}';
+
+            let comment;
+            if (bumpType === 'feature-to-develop') {
+              comment = `✅ Feature PR detected!\n\n📦 Version will be bumped to: **${version}** (patch increment on develop)`;
+            } else if (bumpType === 'release-to-main') {
+              comment = `✅ Release PR detected!\n\n📦 Version will be bumped to: **${version}** (minor increment on main)`;
+            } else {
+              comment = '⚠️ This PR does not follow the branch naming convention:\n- Use `feature/*` branches for merges to develop\n- Use `release/YYYY-MM-DD` branches for merges to main';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

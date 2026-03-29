@@ -3,6 +3,7 @@ export interface Player {
   name: string;
   color: string;
   score: number;
+  currentMultiplier?: number; // Multiplier for this player's next score action
 }
 
 export interface ScoreAction {
@@ -12,14 +13,23 @@ export interface ScoreAction {
   delta: number;
   resultingScore: number;
   timestamp: number;
+  basePoints?: number; // Points before multiplier (for display and calculation)
+  multiplier?: number; // Multiplier applied (1, 2, 3, 5, etc.)
+  finalPoints?: number; // Calculated points sent to player (basePoints * multiplier)
 }
+
+export type MatchStatus = "active" | "paused" | "finished";
 
 export interface GameMatch {
   id: string;
+  name?: string;
   players: Player[];
   actions: ScoreAction[];
   createdAt: number;
+  updatedAt: number;
+  status: MatchStatus;
   isActive: boolean;
+  sourceMatchId?: string;
 }
 
 export interface GameSettings {

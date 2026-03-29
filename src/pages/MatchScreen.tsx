@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Plus, Undo2, RotateCcw, History, X, LogOut, Trophy } from "lucide-react";
+import { ArrowLeft, Plus, Undo2, RotateCcw, History, X, LogOut, Trophy, Save, Check } from "lucide-react";
 
 import { useGame } from "@/store/GameContext";
 import { useI18n } from "@/i18n/I18nContext";
@@ -9,7 +9,11 @@ import { PlayerModal } from "@/components/PlayerModal";
 import { ActionLog } from "@/components/ActionLog";
 import { Scoreboard } from "@/components/Scoreboard";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { SaveMatchModal } from "@/components/SaveMatchModal";
 import { ActionToast } from "@/components/ActionToast";
+import { useSavedMatches } from "@/hooks/useSavedMatches";
+import { useAutoSaveMatch } from "@/hooks/useAutoSaveMatch";
+import { useValidateSavedMatch } from "@/hooks/useValidateSavedMatch";
 import { Player, ScoreAction, PLAYER_COLORS } from "@/store/gameTypes";
 
 interface MatchScreenProps {
@@ -17,15 +21,24 @@ interface MatchScreenProps {
 }
 
 export function MatchScreen({ onNavigate }: MatchScreenProps) {
-  const { match, addPlayer, editPlayer, removePlayer, undo, resetScores, endMatch, getNextColor } = useGame();
+  const { match, addPlayer, editPlayer, removePlayer, undo, resetScores, endMatch, getNextColor, loadMatch } = useGame();
   const { t } = useI18n();
+  const { saveMatch, deleteMatch } = useSavedMatches();
+
+  // Auto-save changes to saved matches
+  useAutoSaveMatch();
+
+  // Validate that saved match still exists
+  useValidateSavedMatch();
 
   const [showPlayerModal, setShowPlayerModal] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [showLog, setShowLog] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
-  const [showScoreboard, setShowScoreboard] = useState(true);
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [isSavingMatch, setIsSavingMatch] = useState(false);
+  const [showScoreboard, setShowScoreboard] = useState(false);
   const [lastAction, setLastAction] = useState<ScoreAction | null>(null);
 
   useEffect(() => {
@@ -88,7 +101,33 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
 
   const handleEndGame = () => {
     endMatch();
+
+    // If this was a saved match, delete it from saved matches
+    if (match?.sourceMatchId) {
+      deleteMatch(match.sourceMatchId);
+    }
+
     onNavigate("home");
+  };
+
+  const handleSaveMatch = async (name: string) => {
+    if (!match) return false;
+    setIsSavingMatch(true);
+    try {
+      const success = await saveMatch(match, name);
+      if (success) {
+        // Update match in context with sourceMatchId and name so auto-save activates
+        loadMatch({
+          ...match,
+          sourceMatchId: match.id,
+          name,
+          status: "active",
+        });
+      }
+      return success;
+    } finally {
+      setIsSavingMatch(false);
+    }
   };
 
   const canAddPlayer = match.players.length < 12;
@@ -118,11 +157,6 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
                 title={showScoreboard ? "Hide scoreboard" : "Show scoreboard"}
               >
                 <Trophy size={18} />
-                {!showScoreboard && (
-                  <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <span className="block w-[2px] h-5 bg-current rotate-45 rounded-full" />
-                  </span>
-                )}
               </button>
             )}
             <button
@@ -137,6 +171,20 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
 
       {/* Content */}
       <div className="flex-1 px-4 py-4 max-w-2xl mx-auto w-full">
+        {/* Auto-saving indicator */}
+        {match.sourceMatchId && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-3 bg-success/10 border border-success/30 rounded-xl flex items-center gap-2"
+          >
+            <Check size={16} className="text-success flex-shrink-0" />
+            <div className="text-xs text-success/80">
+              <span className="font-medium">Auto-saving:</span> {match.name || "Unnamed match"}
+            </div>
+          </motion.div>
+        )}
+
         {/* Action Log Panel */}
         <AnimatePresence>
           {showLog && (
@@ -231,6 +279,15 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
             <Undo2 size={18} />
           </button>
 
+          <button
+            onClick={() => setShowSaveModal(true)}
+            disabled={isSavingMatch}
+            className="p-3 rounded-xl bg-secondary text-muted-foreground hover:text-foreground transition-colors disabled:opacity-30"
+            title={t.saved?.save || "Save Match"}
+          >
+            <Save size={18} />
+          </button>
+
           <motion.button
             whileTap={{ scale: 0.95 }}
             onClick={() => {
@@ -258,6 +315,14 @@ export function MatchScreen({ onNavigate }: MatchScreenProps) {
         player={editingPlayer}
         defaultColor={getNextColor()}
         usedColors={match.players.map(p => p.color)}
+      />
+
+      <SaveMatchModal
+        open={showSaveModal}
+        onClose={() => setShowSaveModal(false)}
+        onSave={handleSaveMatch}
+        defaultName={match.name}
+        isLoading={isSavingMatch}
       />
 
       <ConfirmDialog

@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
-import { ArrowLeft, Globe, Info } from "lucide-react";
+import { ArrowLeft, Globe, Info, Github, Linkedin, Instagram, ExternalLink } from "lucide-react";
 import { useI18n } from "@/i18n/I18nContext";
 import { Language } from "@/i18n/translations";
+import { getVersionString } from "@/lib/version";
 
 interface SettingsProps {
   onNavigate: (page: "home") => void;
@@ -63,14 +64,59 @@ export function Settings({ onNavigate }: SettingsProps) {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-card rounded-xl p-4 border border-border"
+          className="bg-card rounded-xl p-4 border border-border space-y-4"
         >
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2">
             <Info size={18} className="text-primary" />
             <h3 className="font-display font-semibold text-foreground">{t.settings.about}</h3>
           </div>
+
           <p className="text-sm text-muted-foreground">{t.settings.description}</p>
-          <p className="text-xs text-muted-foreground/60 mt-2">{t.settings.version}</p>
+
+          <div className="pt-2 border-t border-border">
+            <p className="text-xs text-muted-foreground/60">
+              {t.settings.version}: <span className="font-mono font-semibold text-foreground">{getVersionString()}</span>
+            </p>
+          </div>
+
+          <div className="pt-2 border-t border-border space-y-2">
+            <p className="text-xs text-muted-foreground">
+              {t.settings.creator} <span className="text-foreground font-medium">{t.settings.creatorName}</span>
+            </p>
+
+            <div className="flex flex-wrap gap-2">
+              <a
+                href="https://github.com/Miguelco23"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-secondary/50 text-secondary-foreground hover:bg-secondary transition-colors"
+              >
+                <Github size={14} />
+                <span>GitHub</span>
+                <ExternalLink size={12} className="opacity-60" />
+              </a>
+              <a
+                href="https://www.linkedin.com/in/miguelco23/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-secondary/50 text-secondary-foreground hover:bg-secondary transition-colors"
+              >
+                <Linkedin size={14} />
+                <span>LinkedIn</span>
+                <ExternalLink size={12} className="opacity-60" />
+              </a>
+              <a
+                href="https://www.instagram.com/miguelco314/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-secondary/50 text-secondary-foreground hover:bg-secondary transition-colors"
+              >
+                <Instagram size={14} />
+                <span>Instagram</span>
+                <ExternalLink size={12} className="opacity-60" />
+              </a>
+            </div>
+          </div>
         </motion.div>
       </div>
     </div>
