@@ -1,0 +1,93 @@
+name: Post-Merge Version Bump (Release to Main)
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+
+permissions:
+  contents: write
+
+jobs:
+  post-merge-bump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 10
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Detect if merge came from release branch
+        id: detect_release
+        run: |
+          # Get the latest commit message
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Last commit message: $COMMIT_MSG"
+
+          # Check if it's a merge commit from a release branch
+          if git log -1 --pretty=%P | grep -q ' ' && echo "$COMMIT_MSG" | grep -q "Merge pull request" && git log -1 --pretty=%B | grep -q "release/"; then
+            echo "is_release_merge=true" >> $GITHUB_OUTPUT
+            echo "✅ Detected merge from release branch"
+          else
+            echo "is_release_merge=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Not a release merge, skipping version bump"
+          fi
+
+      - name: Auto bump version (release merge) - Increment MINOR
+        if: steps.detect_release.outputs.is_release_merge == 'true'
+        run: |
+          CURRENT_VERSION=$(jq -r '.version' version.json)
+          echo "Current version: $CURRENT_VERSION"
+
+          # Parse version: X.Y.Z
+          MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+          MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+          PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+
+          # Increment MINOR (second number), reset PATCH to 0
+          MINOR=$((MINOR + 1))
+          PATCH=0
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_ENV
+
+          # Update version.json with stable release type
+          jq --arg version "$NEW_VERSION" '.version = $version | .releaseType = "stable"' version.json > version.json.tmp
+          mv version.json.tmp version.json
+
+          # Update package.json with same version
+          jq --arg version "$NEW_VERSION" '.version = $version' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          # Configure git and commit
+          git config user.name "🤖 GitHub Actions"
+          git config user.email "actions@github.com"
+          git add version.json package.json
+          git commit -m "chore: bump version to $NEW_VERSION (stable release)"
+          git push origin HEAD
+
+      - name: Create git tag
+        if: steps.detect_release.outputs.is_release_merge == 'true'
+        run: |
+          VERSION=$(jq -r '.version' version.json)
+          TAG="v$VERSION"
+
+          # Check if tag already exists
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "⚠️ Tag $TAG already exists, skipping tag creation"
+          else
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+            echo "✅ Created and pushed tag: $TAG"
+          fi
