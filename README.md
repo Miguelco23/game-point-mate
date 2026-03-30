@@ -61,9 +61,7 @@ GamePoints aims to become:
 
 ### 🔮 Future Improvements
 
-- 🔗 Real-time multiplayer (shared matches via link/QR)
 - 🧠 Voice commands with AI (e.g. “Add 10 points to Juan”)
-- 📊 Advanced stats and match history
 - 💰 Freemium model (ads + premium features)
 - 📱 Native mobile app (via Capacitor or React Native)
 
