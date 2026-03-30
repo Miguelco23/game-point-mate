@@ -92,6 +92,8 @@ jobs:
             let comment;
             if (bumpType === 'feature-to-develop') {
               comment = `✅ Feature PR detected!\n\n📦 Version will be bumped to: **${version}** (patch increment on develop)`;
+            } else if (bumpType === 'release-to-main') {
+              comment = `✅ Release PR detected!\n\n📦 Version will be bumped after merge (minor increment on main)`;
             } else {
               comment = '⚠️ This PR does not follow the branch naming convention:\n- Use `feature/*` branches for merges to develop\n- Use `release/YYYY-MM-DD` branches for merges to main';
             }
