@@ -70,41 +70,14 @@ jobs:
           jq --arg version "$NEW_VERSION" '.version = $version | .releaseType = "dev"' version.json > version.json.tmp
           mv version.json.tmp version.json
 
-          # Configure git and commit
-          git config user.name "🤖 GitHub Actions"
-          git config user.email "actions@github.com"
-          git add version.json
-          git commit -m "chore: bump version to $NEW_VERSION"
-          git push origin HEAD
-
-      - name: Auto bump version (release to main) - Increment MINOR
-        if: steps.version_info.outputs.bump_type == 'release-to-main'
-        run: |
-          CURRENT_VERSION=$(jq -r '.version' version.json)
-          echo "Current version: $CURRENT_VERSION"
-
-          # Parse version: X.Y.Z-dev.N
-          VERSION_PART=$(echo $CURRENT_VERSION | sed 's/-dev.*//')
-          MAJOR=$(echo $VERSION_PART | cut -d. -f1)
-          MINOR=$(echo $VERSION_PART | cut -d. -f2)
-          PATCH=$(echo $VERSION_PART | cut -d. -f3)
-
-          # Increment MINOR (second number), reset PATCH to 0
-          MINOR=$((MINOR + 1))
-          PATCH=0
-
-          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
-          echo "New version: $NEW_VERSION"
-          echo "version=$NEW_VERSION" >> $GITHUB_ENV
-
-          # Update version.json
-          jq --arg version "$NEW_VERSION" '.version = $version | .releaseType = "stable"' version.json > version.json.tmp
-          mv version.json.tmp version.json
+          # Update package.json with same version
+          jq --arg version "$NEW_VERSION" '.version = $version' package.json > package.json.tmp
+          mv package.json.tmp package.json
 
           # Configure git and commit
           git config user.name "🤖 GitHub Actions"
           git config user.email "actions@github.com"
-          git add version.json
+          git add version.json package.json
           git commit -m "chore: bump version to $NEW_VERSION"
           git push origin HEAD
 
@@ -119,8 +92,6 @@ jobs:
             let comment;
             if (bumpType === 'feature-to-develop') {
               comment = `✅ Feature PR detected!\n\n📦 Version will be bumped to: **${version}** (patch increment on develop)`;
-            } else if (bumpType === 'release-to-main') {
-              comment = `✅ Release PR detected!\n\n📦 Version will be bumped to: **${version}** (minor increment on main)`;
             } else {
               comment = '⚠️ This PR does not follow the branch naming convention:\n- Use `feature/*` branches for merges to develop\n- Use `release/YYYY-MM-DD` branches for merges to main';
             }
